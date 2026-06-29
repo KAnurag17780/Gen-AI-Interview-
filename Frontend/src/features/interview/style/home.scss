@@ -10,6 +10,7 @@
     color: #eff6ff;
 
     .hero-card {
+        position: relative;
         order: 1;
         width: 100%;
         max-width: 1200px;
@@ -20,6 +21,41 @@
         background: rgba(15, 23, 42, 0.75);
         box-shadow: 0 20px 45px rgba(15, 23, 42, 0.35);
         backdrop-filter: blur(18px);
+    }
+
+    .logout-btn {
+        position: absolute;
+        top: 1.2rem;
+        right: 1.4rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.5rem 1rem;
+        border-radius: 12px;
+        border: 1px solid rgba(248, 113, 113, 0.3);
+        background: rgba(127, 29, 29, 0.2);
+        backdrop-filter: blur(12px);
+        color: #fca5a5;
+        font-size: 0.88rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        svg {
+            flex-shrink: 0;
+        }
+
+        &:hover {
+            background: rgba(185, 28, 28, 0.35);
+            border-color: rgba(248, 113, 113, 0.5);
+            color: #fecaca;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(185, 28, 28, 0.25);
+        }
+
+        &:active {
+            transform: translateY(0);
+        }
     }
 
     .hero-copy {
