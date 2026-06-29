@@ -1,8 +1,6 @@
 const  { GoogleGenAI } = require("@google/genai")
 const {z} = require("zod")
 const {zodToJsonSchema} = require("zod-to-json-schema")
-const puppeteer = require("puppeteer-core")
-const chromium = require("@sparticuz/chromium-min")
 
 const ai = new GoogleGenAI({
     apiKey : process.env.GOOGLE_GENAI_API_KEY
@@ -231,6 +229,9 @@ function extractJsonObject(rawText) {
 }
 
 async function generatePdfFromHtml(htmlContent) {
+    const chromium = (await import("@sparticuz/chromium-min")).default
+    const puppeteer = (await import("puppeteer-core")).default
+
     const executablePath = await chromium.executablePath(
         "https://github.com/nichochar/chromium-binaries/raw/refs/heads/main/chromium-v133.0.0-pack.tar"
     )
