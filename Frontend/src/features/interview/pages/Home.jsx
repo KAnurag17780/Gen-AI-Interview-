@@ -12,6 +12,8 @@ export const Home = () => {
   const { setUser } = useContext(AuthContext)
   const [jobDescription , setJobDescription] = useState("")
   const [selfDescription , setSelfDescription] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
+  const [selectedFileName, setSelectedFileName] = useState("")
   const resumeInputRef = useRef()
   const recentReports = reports
     .filter((item) => (item?._id || item?.id) && (item?.title || item?.matchScore !== undefined))
@@ -24,9 +26,30 @@ useEffect(() => {
 }, [])
 
 const handleGenerateReport = async () => {
-  const resumeFile = resumeInputRef.current.files[0]
-  const data = await generateReport({jobDescription , selfDescription , resumeFile })
-  navigate(`/interview/${data?.report?._id || data?.report?.id}`)
+  setErrorMessage("")
+  const resumeFile = resumeInputRef.current?.files[0]
+
+  if (!resumeFile) {
+    setErrorMessage("Please select a PDF resume before generating.")
+    return
+  }
+  if (!jobDescription.trim()) {
+    setErrorMessage("Please enter a job description.")
+    return
+  }
+
+  try {
+    const data = await generateReport({ jobDescription, selfDescription, resumeFile })
+    const reportId = data?.report?._id || data?.report?.id
+    if (!reportId) {
+      setErrorMessage("Report was generated but could not be opened. Please try again.")
+      return
+    }
+    navigate(`/interview/${reportId}`)
+  } catch (err) {
+    const msg = err?.response?.data?.message || err?.message || "Failed to generate report. Please try again."
+    setErrorMessage(msg)
+  }
 }
 
 const handleLogout = async () => {
@@ -63,7 +86,7 @@ if(loading){
           Logout
         </button>
         <div className="hero-copy">
-          <p className="eyebrow">AI Interview Prep</p>
+          <p className="eyebrow">ai interview intelligence</p>
           <h1>Build a smarter interview report from your resume and role brief.</h1>
           <p className="lede">
             Paste the job description, upload your resume, and add your self-summary to generate a
@@ -72,9 +95,9 @@ if(loading){
         </div>
 
         <div className="hero-badges" aria-label="Highlights">
-          <span>Resume + JD</span>
-          <span>Structured insights</span>
-          <span>Ready for review</span>
+          <span>resume + jd</span>
+          <span>structured insights</span>
+          <span>ready for review</span>
         </div>
       </section>
 
@@ -82,10 +105,10 @@ if(loading){
         <article className="panel panel-left">
           <header className="panel-header">
             <div>
-              <p className="panel-kicker">Step 1</p>
-              <h2>Job Description</h2>
+              <p className="panel-kicker">01 / intake</p>
+              <h2>job description</h2>
             </div>
-            <span className="chip">Required</span>
+            <span className="chip">required</span>
           </header>
 
           <label className="field-label" htmlFor="jobDescription">Paste the role details</label>
@@ -107,19 +130,29 @@ if(loading){
         <article className="panel panel-right">
           <header className="panel-header">
             <div>
-              <p className="panel-kicker">Step 2</p>
-              <h2>Resume & Self Summary</h2>
+              <p className="panel-kicker">02 / candidate</p>
+              <h2>resume & self summary</h2>
             </div>
-            <span className="chip accent">Recommended</span>
+            <span className="chip accent">recommended</span>
           </header>
 
           <div className="upload-box">
             <div>
               <p className="panel-label">Resume</p>
-              <p className="support-text">Upload a PDF resume for deeper analysis.</p>
+              <p className="support-text">
+                {selectedFileName ? `📄 ${selectedFileName}` : "Upload a PDF resume for deeper analysis."}
+              </p>
             </div>
             <label className="upload-btn" htmlFor="resume">Choose PDF</label>
-            <input ref={resumeInputRef} hidden type="file" name="resume" id="resume" accept=".pdf" />
+            <input
+              ref={resumeInputRef}
+              hidden
+              type="file"
+              name="resume"
+              id="resume"
+              accept=".pdf"
+              onChange={(e) => setSelectedFileName(e.target.files[0]?.name || "")}
+            />
           </div>
 
           <div className="field-block">
@@ -133,9 +166,13 @@ if(loading){
             />
           </div>
 
+          {errorMessage && (
+            <p className="form-error" role="alert">{errorMessage}</p>
+          )}
+
           <button
             onClick={handleGenerateReport}
-            className="generate-btn" type="button">Generate Interview Report</button>
+            className="generate-btn" type="button">Generate Interview Report →</button>
         </article>
       </section>
 
@@ -143,10 +180,10 @@ if(loading){
         <section className="recent-reports">
           <header className="section-header">
             <div>
-              <p className="panel-kicker">Recent</p>
-              <h2>Your interview reports</h2>
+              <p className="panel-kicker">history</p>
+              <h2>recent reports</h2>
             </div>
-            <span className="chip">Latest 3</span>
+            <span className="chip">latest {recentReports.length}</span>
           </header>
 
           <div className="report-list">

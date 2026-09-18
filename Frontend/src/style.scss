@@ -1,19 +1,98 @@
 @use "./styles/buttons.scss";
 
-*{
-    margin: 0%;
-    padding: 0%;
-    box-sizing: border-box;
+:root {
+  /* Canvas & Backgrounds */
+  --bg-canvas: #000000;              /* Primary background: pure pitch black */
+  --bg-surface-lowest: #0d0d0d;      /* Recessed container background */
+  --bg-surface: #141414;             /* Default card & container background */
+  --bg-surface-elevated: #1a1a1a;    /* Highlighted / active card surface */
+  --bg-surface-muted: #292929;       /* Secondary badges, subtle interactive surfaces */
+  --bg-surface-bright: #313131;      /* Sliders, tracks, borders on hover */
+
+  /* Neutral Spectrum */
+  --color-dark-100: #1a1a1a;
+  --color-dark-200: #292929;
+  --color-dark-300: #313131;
+  --color-dark-400: #535353;        /* Subtitle gray, inactive track fill */
+  --color-dark-500: #7e7e7e;        /* Muted captions, inactive metadata */
+
+  /* Brand Accent */
+  --accent-cognac: #75543d;          /* Warm leather / cognac accent swatch */
+  --accent-cognac-hover: #8f674b;
+  --accent-cognac-soft: rgba(117, 84, 61, 0.2);
+  --accent-cognac-border: rgba(117, 84, 61, 0.4);
+
+  /* Typography & Foreground */
+  --text-primary: #ffffff;           /* 100% white for bold headlines & numbers */
+  --text-secondary: #e0e0e0;         /* High readability body & labels */
+  --text-muted: #8e8e8e;             /* Metadata, small tags, secondary info */
+  --text-subtle: #535353;            /* Disabled or de-emphasized footnotes */
+
+  /* Borders & Dividers */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-default: #292929;
+  --border-contrast: #535353;
+  --border-active: #ffffff;
+
+  /* Typography Families */
+  --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
-html,
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-canvas);
+  color: var(--text-secondary);
+}
+
 body,
 #root {
-    width : 1005;
-    background-color: #1d1a1a;
-    color: rgb(189, 180, 180);
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--bg-canvas);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  line-height: 1.5;
 }
 
-.highlight {
-    color: #861d1d;
+/* ── Typography Utilities ── */
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* ── Selection & Scrollbars ── */
+::selection {
+  background: var(--accent-cognac);
+  color: #ffffff;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-canvas);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-dark-300);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-dark-400);
 }
