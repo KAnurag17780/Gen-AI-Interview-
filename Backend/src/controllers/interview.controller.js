@@ -1,4 +1,5 @@
 const mongoose = require("mongoose")
+const pdfParse = require("pdf-parse")
 const { generateInterviewReport , generateResumePdf } = require("../services/ai.service")
 const interviewReportModel = require("../models/interviewReport.model")
 
@@ -14,8 +15,11 @@ async function generateInterviewReportController(req, res) {
     }
 
     try {
-        const pdfParse = require("pdf-parse")
-        const parsedResume = await (new pdfParse.PDFParse(Uint8Array.from(req.file.buffer))).getText()
+        if (!req.file.buffer || req.file.buffer.length === 0) {
+            return res.status(400).json({ message: "Uploaded PDF appears to be empty or corrupt." })
+        }
+
+        const parsedResume = await pdfParse(req.file.buffer)
         const resumeContent = parsedResume.text || ""
         const rawJobDescription = req.body.jobDescription || req.body.jobDescripition || ""
         const selfDescription = req.body.selfDescription || ""

@@ -137,32 +137,49 @@ function normalizeInterviewReport(report = {}) {
    const safeSelfDescription = String(selfDescription || "").trim()
    const safeJobDescription = String(jobDescription || "").trim()
 
-   const prompt = `You are an expert interview coach. Analyze the candidate profile and the target role, then generate a complete interview report in valid JSON only.
+   const prompt = `You are an expert interview coach. Analyze the candidate profile and the target role, then output a single valid JSON object.
 
-Requirements:
-- Always return exactly one JSON object and nothing else.
-- Do not use markdown fences, bullet lists outside JSON, or any explanatory text.
-- Populate every field with meaningful, relevant content.
-- When the resume or job description mention cloud, infrastructure, or developer tools, include those details in the report.
-- Include the candidate's most relevant technologies and methodologies, such as Git, AWS, Kubernetes, PostgreSQL, Agile, Test-Driven Development, and CI/CD, when they are applicable.
+STRICT RULES:
+- Output ONLY a valid JSON object. No markdown, no code fences, no extra text.
+- Every field MUST be populated with real, specific content based on the resume and job description.
+- "intention" must explain WHY an interviewer would ask that question.
+- "answer" must give a concrete suggested answer direction, not a placeholder.
+- "matchScore" must reflect actual match: if the resume strongly matches the JD, score 80-95; weak match = 20-50.
+- "severity" for skillGaps must vary: use "low" when the gap is minor, "high" when it is critical for the role.
+- Each question object MUST have all three fields: question, intention, answer.
 
-Output structure:
+EXACT OUTPUT FORMAT (follow this structure precisely):
 {
-  "matchScore": number,
-  "title": string,
+  "matchScore": 72,
+  "title": "Senior Backend Engineer Interview Report",
   "technicalQuestions": [
-    { "question": string, "intention": string, "answer": string }
+    {
+      "question": "Explain how you would design a rate limiter for a REST API.",
+      "intention": "To assess system design skills and knowledge of API patterns required for this role.",
+      "answer": "Discuss token bucket or sliding window algorithms, Redis for distributed state, and returning 429 status codes with Retry-After headers."
+    }
   ],
   "behavioralQuestions": [
-    { "question": string, "intention": string, "answer": string }
+    {
+      "question": "Tell me about a time you had to debug a critical production issue under pressure.",
+      "intention": "To evaluate problem-solving ability and composure in high-stakes situations.",
+      "answer": "Use the STAR method: describe the incident, how you isolated the root cause, the fix you deployed, and what you changed to prevent recurrence."
+    }
   ],
   "skillGaps": [
-    { "skill": string, "severity": "low" | "medium" | "high" }
+    { "skill": "Kubernetes orchestration", "severity": "high" },
+    { "skill": "GraphQL API design", "severity": "low" }
   ],
   "preparationPlan": [
-    { "day": number, "focus": string, "tasks": [string] }
+    {
+      "day": 1,
+      "focus": "System Design fundamentals",
+      "tasks": ["Study rate limiting patterns", "Review CAP theorem", "Practice 2 system design questions"]
+    }
   ]
 }
+
+Now generate the report for:
 
 Resume:
 ${safeResume}
@@ -176,16 +193,17 @@ ${safeJobDescription}`
     const response = await generateContentWithRetry({
         model: "gemini-3-flash-preview",
         contents: prompt,
-        config : {
-            temperature: 0.2,
-            maxOutputTokens: 2000,
-            responseMimeType : "application/json",
-            responseSchema : zodToJsonSchema(interviewReportSchema),
+        config: {
+            temperature: 0.3,
+            maxOutputTokens: 8000,
+            responseMimeType: "application/json",
         }
     })
 
  const rawText = typeof response?.text === "string" ? response.text : ""
+ console.log("[AI RAW]", rawText.slice(0, 2000))
  const parsed = extractJsonObject(rawText)
+ console.log("[AI PARSED] matchScore:", parsed.matchScore, "| techQ[0]:", JSON.stringify(parsed.technicalQuestions?.[0]), "| skillGap[0]:", JSON.stringify(parsed.skillGaps?.[0]))
  return normalizeInterviewReport(parsed)
  
 }
@@ -228,20 +246,69 @@ function extractJsonObject(rawText) {
   }
 }
 
-async function generatePdfFromHtml(htmlContent) {
-    const chromium = (await import("@sparticuz/chromium-min")).default
+async function getBrowser() {
     const puppeteer = (await import("puppeteer-core")).default
+    const fs = require("fs")
 
-    const executablePath = await chromium.executablePath(
-        "https://github.com/nichochar/chromium-binaries/raw/refs/heads/main/chromium-v133.0.0-pack.tar"
-    )
+    // 1. Explicit path from environment variable
+    const envPath = process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROME_BIN || process.env.CHROME_PATH
+    if (envPath && fs.existsSync(envPath)) {
+        return puppeteer.launch({
+            executablePath: envPath,
+            headless: true,
+            args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+        })
+    }
 
-    const browser = await puppeteer.launch({
-        args: chromium.args,
-        defaultViewport: chromium.defaultViewport,
-        executablePath,
-        headless: chromium.headless,
-    })
+    // 2. Local system browser (Windows / Mac / Linux)
+    const localBrowserPaths = [
+        "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+        (process.env.LOCALAPPDATA || "") + "\\Google\\Chrome\\Application\\chrome.exe",
+        (process.env.PROGRAMFILES || "") + "\\Google\\Chrome\\Application\\chrome.exe",
+        (process.env["PROGRAMFILES(X86)"] || "") + "\\Google\\Chrome\\Application\\chrome.exe",
+        "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+        "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
+        (process.env["PROGRAMFILES(X86)"] || "") + "\\Microsoft\\Edge\\Application\\msedge.exe",
+        (process.env.PROGRAMFILES || "") + "\\Microsoft\\Edge\\Application\\msedge.exe",
+        "/usr/bin/google-chrome",
+        "/usr/bin/google-chrome-stable",
+        "/usr/bin/chromium",
+        "/usr/bin/chromium-browser",
+        "/snap/bin/chromium",
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+        "/Applications/Chromium.app/Contents/MacOS/Chromium"
+    ]
+
+    for (const browserPath of localBrowserPaths) {
+        if (browserPath && fs.existsSync(browserPath)) {
+            return puppeteer.launch({
+                executablePath: browserPath,
+                headless: true,
+                args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+            })
+        }
+    }
+
+    // 3. Fallback for AWS Lambda / Serverless Linux environment
+    try {
+        const chromium = (await import("@sparticuz/chromium-min")).default
+        const packUrl = process.env.CHROMIUM_PACK_URL || "https://github.com/Sparticuz/chromium/releases/download/v149.0.0/chromium-v149.0.0-pack.tar"
+        const executablePath = await chromium.executablePath(packUrl)
+        return puppeteer.launch({
+            args: chromium.args,
+            defaultViewport: chromium.defaultViewport,
+            executablePath,
+            headless: chromium.headless
+        })
+    } catch (err) {
+        throw new Error(`Failed to launch browser for PDF generation: ${err.message}. Please ensure Google Chrome or Microsoft Edge is installed.`)
+    }
+}
+
+async function generatePdfFromHtml(htmlContent) {
+    const browser = await getBrowser()
     try {
       const page = await browser.newPage();
       await page.setContent(htmlContent, { waitUntil: "networkidle0" })

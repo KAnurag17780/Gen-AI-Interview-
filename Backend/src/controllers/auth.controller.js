@@ -10,7 +10,7 @@ const tokenBlacklistModel = require("../models/blacklist.modle")
  */
 
 async function registerUserController(req,res) {
-
+    try {
     const {username , email , password } = req.body
 
     if(!username||!email||!password)
@@ -47,9 +47,11 @@ async function registerUserController(req,res) {
        {expiresIn : "1d"} 
     )
 
+    const isProduction = process.env.NODE_ENV === "production"
     res.cookie("token", token, {
         httpOnly: true,
-        sameSite: "lax",
+        sameSite: isProduction ? "none" : "lax",
+        secure: isProduction,
         maxAge: 24 * 60 * 60 * 1000
     })
 
@@ -62,6 +64,10 @@ async function registerUserController(req,res) {
             email: user.email
         }
     })
+    } catch (error) {
+        console.error("Register error:", error)
+        return res.status(500).json({ message: "Registration failed", error: error.message })
+    }
 }
 
 /**
@@ -71,7 +77,8 @@ async function registerUserController(req,res) {
  */
 
 async function loginUserController(req , res)
-{   
+{
+    try {
     const {email , password} = req.body 
 
     const user = await userModel.findOne({email})
@@ -97,9 +104,11 @@ async function loginUserController(req , res)
        {expiresIn : "1d"} 
     )
 
+    const isProduction = process.env.NODE_ENV === "production"
     res.cookie("token", token, {
         httpOnly: true,
-        sameSite: "lax",
+        sameSite: isProduction ? "none" : "lax",
+        secure: isProduction,
         maxAge: 24 * 60 * 60 * 1000
     })
 
@@ -111,6 +120,10 @@ async function loginUserController(req , res)
             email: user.email
         }
     })
+    } catch (error) {
+        console.error("Login error:", error)
+        return res.status(500).json({ message: "Login failed", error: error.message })
+    }
 }
 
 
@@ -129,7 +142,12 @@ async function logoutUserController(req, res) {
 
     }
 
-    res.clearCookie("token")
+    const isProduction = process.env.NODE_ENV === "production"
+    res.clearCookie("token", {
+        httpOnly: true,
+        sameSite: isProduction ? "none" : "lax",
+        secure: isProduction
+    })
 
     res.status(200).json({
         message: "User logged out sucessfully " 
@@ -145,6 +163,7 @@ async function logoutUserController(req, res) {
 
 async function getMeController(req,res)
 {
+    try {
     // gets the decoded data from auth.middleware
     const user = await userModel.findById(req.user.id)
 
@@ -157,6 +176,10 @@ async function getMeController(req,res)
             email: user.email
         }
     })
+    } catch (error) {
+        console.error("GetMe error:", error)
+        return res.status(500).json({ message: "Failed to get user", error: error.message })
+    }
 }
 
 
