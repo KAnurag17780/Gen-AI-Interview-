@@ -2,6 +2,8 @@
 
 A full-stack web application that leverages **Google Gemini AI** to generate personalised interview preparation reports. Upload your resume, describe yourself and the target role, and receive AI-generated technical & behavioural questions, skill-gap analysis, a day-wise preparation plan, and even a tailored resume PDF — all in one place.
 
+🔗 **Live Demo:** [https://interview-fe-ten.vercel.app](https://interview-fe-ten.vercel.app?_vercel_share=4ccnrYcTaeAkHuJdBIe2sX8cpLhPIQiu)
+
 ---
 
 ## ✨ Features
@@ -237,5 +239,3 @@ The frontend will start on **`http://localhost:5173`** (default Vite port).
 3. A structured prompt is sent to **Google Gemini** (`gemini-3-flash-preview`) with a Zod-derived JSON schema to enforce output structure.
 4. The AI response is parsed, normalised, and persisted to MongoDB.
 5. For **resume PDF generation**, a separate prompt asks Gemini to produce ATS-optimised HTML, which is then converted to PDF via Puppeteer.
-
-
