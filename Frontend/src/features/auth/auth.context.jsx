@@ -20,6 +20,7 @@ export const AuthProvider = ({children}) => {
                 const data = await getMe()
                 if (isMounted) setUser(data?.user ?? null)
             } catch {
+                localStorage.removeItem("token")
                 if (isMounted) setUser(null)
             } finally {
                 if (isMounted) setLoading(false)
